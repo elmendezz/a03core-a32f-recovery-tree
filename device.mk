@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-LOCAL_PATH := device/generic/SRPUH09A006
+LOCAL_PATH := device/samsung/a3core
 
 # For building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true

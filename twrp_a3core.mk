@@ -11,13 +11,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 $(call inherit-product, vendor/omni/config/common.mk)
 
 # Inherit from SRPUH09A006 device
-$(call inherit-product, device/generic/SRPUH09A006/device.mk)
+$(call inherit-product, device/samsung/a3core/device.mk)
 
-PRODUCT_DEVICE := SRPUH09A006
-PRODUCT_NAME := omni_SRPUH09A006
-PRODUCT_BRAND := generic
-PRODUCT_MODEL := Generic Device
-PRODUCT_MANUFACTURER := generic
+PRODUCT_DEVICE := a03core
+PRODUCT_NAME := twrp_a3core
+PRODUCT_BRAND := samsung
+PRODUCT_MODEL := Galaxy A03 Core
+PRODUCT_MANUFACTURER := samsung
 
 PRODUCT_GMS_CLIENTID_BASE := android-generic
 

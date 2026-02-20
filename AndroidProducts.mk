@@ -3,11 +3,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/omni_SRPUH09A006.mk
+    $(LOCAL_DIR)/twrp_a3core.mk
 
 COMMON_LUNCH_CHOICES := \
-    omni_SRPUH09A006-user \
-    omni_SRPUH09A006-userdebug \
-    omni_SRPUH09A006-eng
-
+    twrp_a3core-eng \
+    twrp_a3core-userdebug

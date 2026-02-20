@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-DEVICE_PATH := device/generic/SRPUH09A006
+DEVICE_PATH := device/samsung/a3core
 
 # For building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true
@@ -16,7 +16,7 @@ TARGET_CPU_ABI2 :=
 TARGET_CPU_VARIANT := generic
 TARGET_CPU_VARIANT_RUNTIME := generic
 # Bootloader
-TARGET_BOOTLOADER_BOARD_NAME := SRPUH09A006
+TARGET_BOOTLOADER_BOARD_NAME := a3core
 TARGET_NO_BOOTLOADER := true
 
 # Display
