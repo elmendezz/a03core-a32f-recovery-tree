@@ -12,7 +12,7 @@ $(call inherit-product, vendor/twrp/config/common.mk)
 # Inherit from SRPUH09A006 device
 $(call inherit-product, device/samsung/a3core/device.mk)
 
-PRODUCT_DEVICE := a03core
+PRODUCT_DEVICE := a3core
 PRODUCT_NAME := twrp_a3core
 PRODUCT_BRAND := samsung
 PRODUCT_MODEL := Galaxy A03 Core
