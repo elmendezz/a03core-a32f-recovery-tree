@@ -1,0 +1,136 @@
+name: Compilar Recovery A03 Core
+
+on:
+  workflow_dispatch:
+    inputs:
+      recovery_type:
+        description: 'Selecciona qué recovery compilar'
+        required: true
+        default: 'twrp'
+        type: choice
+        options:
+        - twrp
+        - orangefox
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    # Agregamos un timeout para no gastar minutos si se queda colgado
+    timeout-minutes: 120 
+
+    steps:
+    # - name: Limpiar espacio en disco (Optimizado)
+    #   uses: jlumbroso/free-disk-space@v1.3.1
+    #   with:
+    #     tool-cache: true
+    #     android: true
+    #     dotnet: true
+    #     haskell: true
+    #     swap: true
+
+    - name: Configurar Java 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Instalar Dependencias
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5 libncurses5-dev libssl-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip python2 rsync git ccache
+        # Configurar Python 2 como predeterminado para el script de compilación
+        mkdir -p $HOME/bin
+        ln -s /usr/bin/python2 $HOME/bin/python
+        echo "$HOME/bin" >> $GITHUB_PATH
+        curl https://storage.googleapis.com/git-repo-downloads/repo > $HOME/bin/repo
+        chmod a+x $HOME/bin/repo
+
+    - name: Sincronizar Fuentes
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        
+        mkdir -p ~/work
+        cd ~/work
+        
+        if [ "${{ github.event.inputs.recovery_type }}" == "twrp" ]; then
+          # Actualizado a twrp-12.1 para coincidir con tu device tree
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+        else
+          # OrangeFox Sync
+          git clone https://gitlab.com/OrangeFox/sync.git
+          cd sync
+          ./orangefox_sync.sh --branch 11.0 --path ~/work/fox_11.0 # Usando rama 11 para a3core
+          cd ~/work/fox_11.0
+        fi
+        
+        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+
+    - name: Clonar Device Tree
+      run: |
+        if [ "${{ github.event.inputs.recovery_type }}" == "twrp" ]; then
+          ROOT_DIR=~/work
+        else
+          ROOT_DIR=~/work/fox_11.0
+        fi
+        
+        cd $ROOT_DIR
+        
+        # Clonando el nuevo repositorio en la rama twrp-12
+        git clone -b android-12 https://github.com/Ridhoardhiansyah7/android_device_samsung_a3core device/samsung/a3core
+        
+        # --- FIX: OTORGAR PERMISOS DE EJECUCIÓN ---
+        echo "Corrigiendo permisos de binarios en el device tree..."
+        chmod -R +x device/samsung/a3core/
+
+    - name: Compilar Recovery
+      run: |
+        if [ "${{ github.event.inputs.recovery_type }}" == "twrp" ]; then
+          cd ~/work
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch twrp_a3core-eng
+          make clean && make recoveryimage -j$(nproc --all)
+          
+          # Crear un ZIP empaquetando el recovery.img generado
+          cd out/target/product/a3core
+          zip TWRP-a3core.zip recovery.img
+        else
+          cd ~/work/fox_11.0
+          export ALLOW_MISSING_DEPENDENCIES=true
+          
+          # Parches de variables para evitar errores de comillas
+          sed -i 's/FOX_VERSION/ "R11.1" /g' bootable/recovery/twrp.cpp || true
+          
+          source build/envsetup.sh
+          lunch omni_a3core-eng
+          make clean
+          mka recoveryimage FOX_VERSION="R11.1" OF_MAINTAINER="elmendezz" -j$(nproc --all)
+        fi
+
+    - name: Publicar Release (Si es TWRP)
+      if: github.event.inputs.recovery_type == 'twrp' && success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: twrp-a3core-${{ github.run_number }}
+        name: TWRP Recovery A03 Core
+        files: |
+          ~/work/out/target/product/a3core/TWRP-a3core.zip
+          ~/work/out/target/product/a3core/recovery.img
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publicar Release (Si es OrangeFox)
+      if: github.event.inputs.recovery_type == 'orangefox' && success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: orangefox-a3core-${{ github.run_number }}
+        name: OrangeFox Recovery A03 Core
+        files: |
+          ~/work/fox_11.0/out/target/product/a3core/OrangeFox-*.zip
+          ~/work/fox_11.0/out/target/product/a3core/recovery.img
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
